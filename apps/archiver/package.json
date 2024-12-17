@@ -1,0 +1,21 @@
+{
+  "name": "archiver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js",
+    "start": "pnpm run build && node ./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.0.1",
+    "esbuild": "^0.24.0",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@repo/types": "workspace:*"
+  }
+}
