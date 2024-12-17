@@ -1,8 +1,10 @@
 type login = {
-    type: "login",
+    type: "login" | "signup",
     payload: {
+        username: string,
         email: string,
-        password: string
+        password: string,
+        role: string
     }
 };
 

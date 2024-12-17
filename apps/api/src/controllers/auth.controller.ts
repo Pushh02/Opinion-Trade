@@ -4,75 +4,28 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 import db from "@repo/db";
+import { AsyncManager } from "../AsyncManager";
 
 export class AuthController extends BaseController {
   //for signup
   async signup(req: Request, res: Response) {
     return this.handleRequest(req, res, async () => {
-      const { name, email, password } = req.body;
+      const { username, email, password, role } = req.body;
 
       try {
-        if (email && password) {
-          const checkExistingProfile = await db.user.findFirst({
-            where: {
-              email,
-            },
-          });
-          if (checkExistingProfile) {
-            const token = jwt.sign(
-              { profileId: checkExistingProfile.id },
-              process.env.JWT_SECRET || "nope"
-            );
-            res.status(400).json({ access_token: token });
-          }
-          const hashedPassword = await bcrypt.hash(password, 12);
-          const user = await db.user.create({
-            data: {
-              name,
-              email,
-              password: hashedPassword,
-            },
-          });
-          // Generate access token
-          const accessToken = jwt.sign(
-            {
-              profileId: user.id,
-              exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15 minutes
-            },
-            process.env.JWT_SECRET || "nope"
-          );
-
-          // Generate refresh token
-          const refreshToken = jwt.sign(
-            {
-              profileId: user.id,
-            },
-            process.env.REFRESH_TOKEN_SECRET || "refresh-nope",
-            { expiresIn: "7d" }
-          );
-
-          // Set secure cookie
-          res.cookie("Authorization", accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            maxAge: 15 * 60 * 1000, // 15 minutes
-          });
-
-          return res.status(200).json({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-            user: {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-            },
-          });
-        } else {
-          res.status(409).send("fields are empty");
-        }
+        const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+          type: "signup",
+          payload: {
+            username,
+            email,
+            password,
+            role,
+          },
+        });
+        return res.status(200).json(responseFromEngine);
       } catch (err) {
-        res.send(err);
+        // res.send(err);
+        console.log(err);
       }
     });
   }

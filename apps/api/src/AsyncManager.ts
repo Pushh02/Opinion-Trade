@@ -14,7 +14,12 @@ export class AsyncManager {
       clientId: "app",
       brokers: ["localhost:9092"],
     });
-    this.queue = createClient();
+    this.queue = createClient({
+      socket: {
+        host: "localhost",
+        port: 6380,
+      },
+    });
     this.consumer = kafks.consumer({ groupId: "app-group" });
     this.messageHandler = new Map();
   }
@@ -54,7 +59,7 @@ export class AsyncManager {
     }
   }
 
-  public static async getInstance() {
+  public static getInstance() {
     if (!AsyncManager.instance) {
       AsyncManager.instance = new AsyncManager();
     }
@@ -67,33 +72,34 @@ export class AsyncManager {
     }
 
     return new Promise(async (resolve, reject) => {
-      const correlationId =
+      const corelationId =
         Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15);
 
       const timeOutId = setTimeout(() => {
-        if (this.messageHandler.has(correlationId)) {
-          this.messageHandler.delete(correlationId);
+        if (this.messageHandler.has(corelationId)) {
+          this.messageHandler.delete(corelationId);
           reject(new Error("Request timed out"));
         }
       }, 12000);
 
-      this.messageHandler.set(correlationId, (value) => {
+      this.messageHandler.set(corelationId, (value) => {
         clearTimeout(timeOutId);
         resolve(value);
       });
 
       try {
+        console.log("Sending message to Kafka", request);
         await this.queue.lPush(
           "request",
           JSON.stringify({
             ...request,
-            correlationId,
+            corelationId,
           })
         );
       } catch (error) {
         clearTimeout(timeOutId);
-        this.messageHandler.delete(correlationId);
+        this.messageHandler.delete(corelationId);
         const errorResponse =
           error instanceof Error ? error.message : "unknown error";
         reject(errorResponse);
