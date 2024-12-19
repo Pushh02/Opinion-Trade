@@ -10,6 +10,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/auth", authRouter);
 
+app.post("/symbol/create/:symbol", (req, res) => {
+    
+})
+
 app.listen(PORT, () => {
     console.log(`API listening on port ${PORT}`);
 });

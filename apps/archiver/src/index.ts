@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { Consumer, Kafka } from "kafkajs";
+import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { responsePayloadType } from "./types";
 
 const main = async () => {
@@ -17,14 +17,11 @@ const main = async () => {
   });
 
   await consumer.run({
-    eachMessage: async ({ message }) => {
+    eachMessage: async ({ message }: EachMessagePayload) => {
       if (!message.key || !message.value) return;
 
       const { type, payload } = JSON.parse(message.value.toString());
       switch (type) {
-        case responsePayloadType.login_response:
-          //login logic
-          break;
         case responsePayloadType.signup_response:
           console.log("signup response", payload);
           const { user } = payload;
@@ -36,6 +33,7 @@ const main = async () => {
             });
             if (existingUser) {
               console.log("user already exists", user.id);
+              return;
             }
             await prisma.$transaction(async () => {
               const inrBalance = await prisma.inrBalance.create({
@@ -53,9 +51,9 @@ const main = async () => {
                   role: user.role,
                   userInrBalance: {
                     connect: {
-                        id: inrBalance.id
-                    }
-                  }
+                      id: inrBalance.id,
+                    },
+                  },
                 },
               });
             });

@@ -12,8 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
     "redis": "^4.7.0"
   }

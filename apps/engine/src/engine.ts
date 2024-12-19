@@ -1,6 +1,7 @@
 import { KafkaManager } from "./kafkaManager";
 import { responsePayloadType, User } from "./types/dbTypes";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export class Engine {
   private static instance: Engine;
@@ -53,10 +54,6 @@ export class Engine {
     } catch (error) {
       console.log(error);
     }
-  }
-
-  private async loginReq(request: any) {
-    const { corelationId } = request;
   }
 
   private async signupReq(request: any) {
@@ -130,4 +127,63 @@ export class Engine {
       });
     }
   }
+
+  private async loginReq(request: any) {
+    const { corelationId } = request;
+    const { email, password } = request.payload;
+
+    try {
+      const dbUser = this.findUserEmail(email);
+      if (!dbUser) {
+        throw new Error("User not found");
+      }
+
+      const passwordMatch = await bcrypt.compare(password, dbUser.password);
+      if (!passwordMatch) {
+        throw new Error("Invalid password");
+      }
+
+      const token = jwt.sign({ userId: dbUser.id }, "secret");
+
+      const reponsePayload = {
+        type: responsePayloadType.login_response,
+        payload: {
+          success: true,
+          message: "User logged in successfully",
+          token,
+          user: dbUser,
+        },
+      };
+
+      await KafkaManager.getInstance().sendToKafka({
+        topic: "response",
+        messages: [
+          {
+            key: corelationId,
+            value: JSON.stringify(reponsePayload),
+          },
+        ],
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : error;
+      const reponsePayload = {
+        type: responsePayloadType.login_response,
+        payload: {
+          success: false,
+          message: errorMessage,
+        },
+      };
+
+      await KafkaManager.getInstance().sendToKafka({
+        topic: "response",
+        messages: [
+          {
+            key: corelationId,
+            value: JSON.stringify(reponsePayload),
+          },
+        ],
+      });
+    }
+  }
+
 }

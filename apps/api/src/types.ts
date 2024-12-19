@@ -1,5 +1,5 @@
-type login = {
-    type: "login" | "signup",
+type signup = {
+    type: "signup",
     payload: {
         username: string,
         email: string,
@@ -8,4 +8,12 @@ type login = {
     }
 };
 
-export type requestPayload = login
+type login = {
+    type: "login",
+    payload: {
+        username: string,
+        password: string
+    }
+}
+
+export type requestPayload = signup | login
