@@ -18,6 +18,24 @@ enum Role {
   USER
 }
 
+enum OrderStatus {
+  PENDING
+  FILLED
+  PARTIALLY_FILLED
+  CANCELLED
+}
+
+enum Side {
+  YES
+  NO
+}
+
+enum MarketStatus {
+  ACTIVE
+  CLOSED
+  RESOLVED
+}
+
 model User {
   id             String         @id
   username       String         @unique
@@ -26,6 +44,8 @@ model User {
   role           Role
   inrBalanceId   String         @unique
   userInrBalance InrBalance     @relation(fields: [inrBalanceId], references: [id])
+  orders         Order[]
+  stockBalance   StockBalance[]
 }
 
 model InrBalance {
@@ -33,4 +53,46 @@ model InrBalance {
   available      Float
   locked         Float
   user           User?
+}
+
+model Market {
+  id              String         @id
+  symbol          String
+  description     String
+  endTime         DateTime
+  sourceOfTruth   String
+  categoryId      String
+  status          MarketStatus
+  lastPrice       Int
+  totalVolume     Int
+  resolvedOutcome Side?
+  Orders          Order[]
+  StockBalance    StockBalance[]
+  timestamp       DateTime
+}
+
+
+model StockBalance {
+  id       String @id @default(uuid())
+  user     User   @relation(fields: [userId], references: [id])
+  marketId String
+  market   Market @relation(fields: [marketId], references: [id])
+  side     Side
+  quantity Int
+  locked   Int
+  userId   String
+}
+
+model Order {
+  id                String      @id
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  marketId          String
+  market            Market      @relation(fields: [marketId], references: [id])
+  side              Side
+  quantity          Int
+  remainingQuantity Int
+  price             Int
+  status            OrderStatus
+  timestamp         DateTime
 }
