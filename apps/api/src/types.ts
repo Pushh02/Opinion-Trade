@@ -16,4 +16,9 @@ type login = {
     }
 }
 
-export type requestPayload = signup | login
+type empty = {
+    type: "empty",
+    payload: {}
+}
+
+export type requestPayload = signup | login | empty

@@ -48,6 +48,9 @@ export class Engine {
         case "signup":
           await this.signupReq(request);
           break;
+        case "empty":
+          await this.emptyReq(request);
+          break;
         default:
           break;
       }
@@ -130,10 +133,10 @@ export class Engine {
 
   private async loginReq(request: any) {
     const { corelationId } = request;
-    const { email, password } = request.payload;
+    const { username, password } = request.payload;
 
     try {
-      const dbUser = this.findUserEmail(email);
+      const dbUser = this.findUsername(username);
       if (!dbUser) {
         throw new Error("User not found");
       }
@@ -183,6 +186,24 @@ export class Engine {
           },
         ],
       });
+    }
+  }
+
+  private async emptyReq(request: any) {
+    const { corelationId } = request;
+    this.userMap.clear();
+    try {
+      await KafkaManager.getInstance().sendToKafka({
+        topic: "response",
+        messages: [
+          {
+            key: corelationId,
+            value: JSON.stringify(this.userMap),
+          },
+        ],
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 

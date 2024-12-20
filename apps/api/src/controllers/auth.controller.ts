@@ -1,9 +1,5 @@
 import { BaseController } from "./base.controller";
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-
-import db from "@repo/db";
 import { AsyncManager } from "../AsyncManager";
 
 export class AuthController extends BaseController {
