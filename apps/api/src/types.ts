@@ -16,9 +16,21 @@ type login = {
     }
 }
 
+type createMarker = {
+    type: "createMarket",
+    payload: {
+        token: string;
+        symbol: string,
+        description: string,
+        endTime: Date,
+        sourceOfTruth: string,
+        status: string,
+    }
+}
+
 type empty = {
     type: "empty",
     payload: {}
 }
 
-export type requestPayload = signup | login | empty
+export type requestPayload = signup | login | empty | createMarker

@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { createClient } from "redis";
-import { KafkaManager } from "./kafkaManager";
 import { Engine } from "./engine";
 
 async function main() {

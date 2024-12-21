@@ -59,6 +59,23 @@ const main = async () => {
             });
           }
           break;
+        case responsePayloadType.createMarket_response:
+          const { market: marketData } = payload;
+          // const market = await prisma.market.create({
+          //   data: {
+          //     id: marketData.id,
+          //     symbol: marketData.symbol,
+          //     description: marketData.description,
+          //     endTime: marketData.endTime,
+          //     sourceOfTruth: marketData.sourceOfTruth,
+          //     status: marketData.status,
+          //     timestamp: new Date(),
+          //   },
+          // });
+          // console.log("market created", market);
+          break;
+        default:
+          break;
       }
     },
   });
