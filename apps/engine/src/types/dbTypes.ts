@@ -4,6 +4,7 @@ export enum responsePayloadType {
     createMarket_response = "createMarket_response",
     getMarketList_response = "getMarketList_response",
     getMarket_response = "getMarket_response",
+    createCategory_response = "createCategory_response",
     buy_response = "buy_response",
     sell_response = "sell_response"
 }
@@ -42,6 +43,23 @@ export enum Side {
     NO = "NO"
 }
 
+export type Market = {
+    id: string,
+    symbol: string,
+    description: string,
+    endTime: Date,
+    sourceOfTruth: string,
+    categoryId: string,
+    categoryTitle: string,
+    status: MarketStatus,
+    lastYesPrice: number,
+    lastNoPrice: number,
+    totalVolume: number,
+    resolvedOutcome?: Side
+    timestamp: Date,
+    createdBy: String
+}
+
 export enum OrderStatus {
     PENDING = "PENDING",
     FILLED = "FILLED",
@@ -66,3 +84,9 @@ export type Order = {
     timeStamp: Date
 }
 
+export type Category = {
+    id: string,
+    title: string,
+    icon: string,
+    description: string
+}

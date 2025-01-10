@@ -13,21 +13,47 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/auth", authRouter);
 
 app.get("/markets", async (req, res) => {
-  const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
-      type: 'get_all_markets',
-  })
-  res.json(responseFromEngine)
+  try{
+    const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+    type: 'get_all_markets',
+    })
+    res.json(responseFromEngine)
+  } catch (err) {
+    res.status(500).send(err);
+  }
 })
 
 app.get("/market/:symbol", async (req, res) => {
-  const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
-    type: "get_market",
-    payload: {
-      marketSymbol: req.params.symbol,
-    },
-  });
-  res.json(responseFromEngine);
+  try{
+    const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+      type: "get_market",
+      payload: {
+        marketSymbol: req.params.symbol,
+      },
+    });
+    res.json(responseFromEngine);
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
+
+app.post("/create/category", async (req, res) => {
+  const { title, description, icon } = req.body;
+  try {
+    const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+      type: "create_category",
+      payload: {
+        token: req.headers.authorization || "",
+        title: title as string,
+        description: description as string,
+        icon: icon as string,
+      },
+    });
+    res.json(responseFromEngine);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+})
 
 app.post(
   "/create-market",

@@ -6,6 +6,8 @@ import {
   responsePayloadType,
   Side,
   User,
+  Category,
+  Market,
   StockBalance,
   Position,
 } from "./types/dbTypes";
@@ -17,11 +19,13 @@ import { v4 as uuidv4 } from "uuid";
 export class Engine {
   private static instance: Engine;
   private userMap: Map<string, User>;
-  private marketMap: Map<string, any>;
+  private categoryMap: Map<string, Category>;
+  private marketMap: Map<string, Market>;
   private orderBook: Map<string, Order[]>;
 
   private constructor() {
     this.userMap = new Map();
+    this.categoryMap = new Map();
     this.marketMap = new Map();
     this.orderBook = new Map();
   }
@@ -39,6 +43,15 @@ export class Engine {
     for (const user of this.userMap.values()) {
       if (user.email === email) {
         return user;
+      }
+    }
+    return null;
+  }
+
+  private getCategoryFromTitle(title: string): Category | null {
+    for (const category of this.categoryMap.values()) {
+      if (category.title === title) {
+        return category;
       }
     }
     return null;
@@ -75,11 +88,8 @@ export class Engine {
         case "get_market":
           await this.handleGetMarket(request);
           break;
-        case "updateMarket":
-          // function call
-          break;
-        case "deleteMarket":
-          // function call
+        case 'create_category':
+          await this.handleCreateCategory(request);
           break;
         case "getMarket":
           // function call
@@ -292,6 +302,8 @@ export class Engine {
 
   private async createMarketReq(request: any) {
     const { corelationId } = request;
+    const { token, symbol, description, endTime, sourceOfTruth, status, categoryTitle } =
+      request.payload;
     try {
       const user = await this.verifyToken(request.payload.token);
 
@@ -303,15 +315,23 @@ export class Engine {
         throw new Error("Only admin can create market");
       }
 
+      const category = this.getCategoryFromTitle(categoryTitle);
+      if (!category) {
+        throw new Error("Category not found in database");
+      }
+
       const marketId = uuidv4();
       const market = {
         id: marketId,
-        symbol: request.payload.symbol,
-        description: request.payload.description,
-        endTime: request.payload.endTime,
-        sourceOfTruth: request.payload.sourceOfTruth,
-        status: request.payload.status,
+        symbol: symbol,
+        description: description,
+        endTime: endTime,
+        sourceOfTruth: sourceOfTruth,
+        status: status,
         createdBy: user.id,
+        categoryId: category.id,
+        categoryTitle: category.title,
+        timestamp: new Date(),
         lastYesPrice: 5,
         lastNoPrice: 5,
         totalVolume: 0,
@@ -452,6 +472,74 @@ export class Engine {
       });
     }
   }
+
+  private async handleCreateCategory(request: any) {
+    const corelationId = request.corelationId;
+    const { token, title, icon, description} = request.payload;
+    try {
+      const user = await this.verifyToken(token);
+
+      if (!user) {
+        throw new Error("User not found in database");
+      }
+
+      if (user.role !== "ADMIN") {
+        throw new Error("Only admin can create category");
+      }
+
+      const db_category = this.categoryMap.get(title);
+      if (db_category) {
+        throw new Error("Category already exists");
+      }
+
+      const category = {
+        id: uuidv4(),
+        title,
+        icon,
+        description,
+      };
+      this.categoryMap.set(category.id, category);
+
+      const responsePayload = {
+        type: responsePayloadType.createCategory_response,
+        payload: {
+          success: true,
+          message: "Category created successfully",
+          category,
+        },
+      };
+
+      await KafkaManager.getInstance().sendToKafka({
+        topic: "response",
+        messages: [
+          {
+            key: corelationId,
+            value: JSON.stringify(responsePayload),
+          },
+        ],
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : error;
+
+      const responsePayload = {
+        type: responsePayloadType.createCategory_response,
+        payload: {
+          success: false,
+          message: errorMessage,
+        },
+      };
+
+      await KafkaManager.getInstance().sendToKafka({
+        topic: "response",
+        messages: [
+          {
+            key: corelationId,
+            value: JSON.stringify(responsePayload),
+          },
+        ],
+      });
+    }
+  } 
 
   private async sellReq(request: any) {
     const { corelationId } = request;

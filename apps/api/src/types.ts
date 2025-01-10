@@ -55,4 +55,14 @@ type getMarket = {
     }
 }
 
-export type requestPayload = signup | login | empty | createMarker | order | getMarket | getMarkets;
+type createCategory = {
+    type: "create_category",
+    payload: {
+        token: string,
+        title: string,
+        icon: string,
+        description: string
+    }
+}
+
+export type requestPayload = signup | login | empty | createMarker | order | getMarket | getMarkets | createCategory;
