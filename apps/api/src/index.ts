@@ -12,29 +12,67 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/auth", authRouter);
 
-app.post("/create-market", checkToken, async(req: AuthenticatedRequest, res) => {
-    const { symbol, description, endTime, sourceOfTruth } = req.body;
-    try {
-        const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
-            type: "createMarket",
-            payload: {
-                token: req.token,
-                symbol,
-                description,
-                endTime,
-                sourceOfTruth,
-                status: "ACTIVE",
-            },
-        });
-        res.json(responseFromEngine);
-    } catch (err) {
-        res.status(500).send(err);
-    }
+app.get("/markets", async (req, res) => {
+  const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+      type: 'get_all_markets',
+  })
+  res.json(responseFromEngine)
 })
 
+app.get("/market/:symbol", async (req, res) => {
+  const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+    type: "get_market",
+    payload: {
+      marketSymbol: req.params.symbol,
+    },
+  });
+  res.json(responseFromEngine);
+});
 
+app.post(
+  "/create-market",
+  checkToken,
+  async (req: AuthenticatedRequest, res) => {
+    const { symbol, description, endTime, sourceOfTruth } = req.body;
+    try {
+      const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+        type: "createMarket",
+        payload: {
+          token: req.headers.authorization || "",
+          symbol,
+          description,
+          endTime,
+          sourceOfTruth,
+          status: "ACTIVE",
+        },
+      });
+      res.json(responseFromEngine);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  }
+);
 
-app.post("/delete", async(req, res) => {
+app.post("/sell", async (req, res) => {
+  const { symbol, quantity, price, stockType } = req.body;
+  try {
+    const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
+      type: "sell",
+      payload: {
+        token: req.headers.authorization || "",
+        symbol,
+        quantity,
+        price,
+        stockType: stockType as "YES" | "NO",
+      },
+    });
+    res.json(responseFromEngine);
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+app.post("/delete", async (req, res) => {
   try {
     const responseFromEngine = await AsyncManager.getInstance().sendAndAwait({
       type: "empty",

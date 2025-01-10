@@ -33,4 +33,26 @@ type empty = {
     payload: {}
 }
 
-export type requestPayload = signup | login | empty | createMarker
+type order = {
+    type: "sell" | "buy",
+    payload: {
+        token: string,
+        symbol: string,
+        quantity: number,
+        price: number,
+        stockType: string
+    }
+}
+
+type getMarkets = {
+    type: "get_all_markets",
+}
+
+type getMarket = {
+    type: "get_market",
+    payload: {
+        marketSymbol: string
+    }
+}
+
+export type requestPayload = signup | login | empty | createMarker | order | getMarket | getMarkets;
